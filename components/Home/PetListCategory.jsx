@@ -3,36 +3,35 @@ import React, { useState, useEffect } from "react";
 import Category from "./Category";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../app/firebase-config";
-
+import { TouchableOpacity } from "react-native-gesture-handler";
+import PetCard from "./PetCard";
 const PetListCategory = () => {
   const [categoryData, setCategoryData] = useState([]);
+  const [loading, setLoading] = useState(false)
 
   const getPetList = async (category) => {
+    setLoading(true);
     const petQuery = query(
       collection(db, "pets"),
-      where("category", "==", "🐶 Dogs")
+      where("category", "==", category)
     );
     const snapshot = await getDocs(petQuery);
-    const pets = snapshot.docs.map((doc) => doc.data());
-    setCategoryData(pets);
+    if (!snapshot.empty) {
+      const pets = snapshot.docs.map((doc) => doc.data());
+      setCategoryData(pets);
+    } else {
+      console.log("pet not found")
+      setCategoryData([])
+    }
+    setLoading(false);
+
   };
 
   useEffect(() => {
-    getPetList("🐶 Dogs"); 
+    getPetList("🐶 Dogs");
   }, []);
 
-  const renderItem = ({ item }) => (
-    <View className="bg-white rounded-lg shadow-md mr-4 mb-4" style={{ width: (Dimensions.get('window').width / 2) - 20 }}>
-      <Image
-        source={{ uri: item.imageURL }}
-        className="w-full h-36 object-cover rounded-t-lg"
-      />
-      <View className='p-4'>
-        <Text className='text-xl font-bold'>{item.name}</Text>
-        <Text className='text-sm text-gray-600'>{item.breed}</Text>
-      </View>
-    </View>
-  );
+
 
   return (
     <View className="w-full px-2">
@@ -42,13 +41,18 @@ const PetListCategory = () => {
         }}
       />
       <FlatList
+      className=' p-2'
         data={categoryData}
-        keyExtractor={(item) => item.name}
-        renderItem={renderItem}
+        renderItem={({item,index})=>{
+          return<PetCard item={item}/>
+        }}
         numColumns={2}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 10 }}
-        style={{ width: Dimensions.get('window').width }}
+        refreshing={loading}
+        onRefresh={()=>getPetList(category)}
+       contentContainerStyle="p-2"
+        columnWrapperStyle="justify-between"
+        
+        style={{ width: Dimensions.get("window").width }}
       />
     </View>
   );

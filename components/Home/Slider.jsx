@@ -5,12 +5,14 @@ import { db } from "../../app/firebase-config";
 
 const Slider = () => {
   const [sliders, setSliders] = useState([]);
+   const[loading, setLoading] = useState(false)
 
   useEffect(() => {
     getSliders();
   }, []);
 
   const getSliders = async () => {
+    setLoading(true);
     setSliders([]);
     const snapshot = await getDocs(collection(db, "sliders"));
     snapshot.forEach((doc) => {
@@ -19,12 +21,17 @@ const Slider = () => {
 
       }
     });
+    setLoading(false)
   };
 
   return (
-    <View className="w-max h-[30%] flex items-center justify-center ">
+    <View className="w-max h-[30vh] flex items-center justify-center ">
       <FlatList 
         data={sliders}
+        refreshing={loading}
+        onRefresh={()=>{
+          getSliders();
+        }}
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         renderItem={({ item,index }) => (

@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View , ScrollView} from "react-native";
 import { useUser } from "@clerk/clerk-expo";
 import { useRootNavigationState } from "expo-router";
 import { useEffect } from "react";
@@ -21,11 +21,11 @@ export default function Index() {
 
 
   return (
-    <View className="flex-1 ">
+    <ScrollView className="flex-1 ">
       <Text className="text-black">
         {user?.fullName || "Guest"}
       </Text>
       {user ? <Redirect href={"/(tabs)/home"} /> : <Redirect href={"/Login"} />}
-    </View>
+    </ScrollView>
   );
 }
