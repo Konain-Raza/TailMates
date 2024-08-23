@@ -27,8 +27,8 @@ const Index = () => {
         });
 
       if (createdSessionId) {
-        console.log("logged in session");
-        // setActive!({ session: createdSessionId })
+        console.log("Logged in session");
+        // setActive!({ session: createdSessionId });
       } else {
         // Use signIn or signUp for next steps such as MFA
       }
@@ -38,21 +38,21 @@ const Index = () => {
   }, [startOAuthFlow]);
 
   return (
-    <View className="w-full h-full bg-[#E8E5FA] bg-main mt-2 flex flex-col">
+    <View className="flex-1 bg-[#E8E5FA] mt-2 flex flex-col">
       <Image
-        className="object-contain w-full h-[60%]"
+        className="w-full h-1/2 object-cover mt-10"
         source={require("../../assets/images/login.jpg")}
       />
-      <View className="w-full h-[40%] flex flex-col">
-        <Text className="w-full px-5 pb-2 text-3xl text-center font-outfit-bold">
+      <View className=" h-[40%] flex flex-col justify-center px-4">
+        <Text className="text-4xl text-center font-outfit-bold mb-2">
           Ready to Find Your Furry BFF? 🐕
         </Text>
-        <Text className="w-full px-5 text-xl text-center text-gray-600 pb-10 font-outfit">
+        <Text className="text-xl text-center text-gray-600 mb-10 font-outfit">
           Time to adopt a pet and unleash a whole new level of happiness! 🐾✨
         </Text>
         <Pressable
           onPress={onPress}
-          className="w-[80%] text-center p-5 bg-purple-950 mx-auto flex items-center rounded-xl"
+          className="w-[90%] mx-auto bg-purple-950 p-5 rounded-xl items-center"
         >
           <Text className="text-white text-xl font-bold">Get Started</Text>
         </Pressable>

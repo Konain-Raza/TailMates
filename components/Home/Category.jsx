@@ -13,14 +13,25 @@ const Category = ({ getPetCategory }) => {
   }, []);
 
   const getCategories = async () => {
-    setCategories([]);
-    const snapshot = await getDocs(collection(db, "categories"));
-    snapshot.forEach((document) => {
-      if (document.exists()) {
-        setCategories((categories) => [...categories, document.data()]);
-      }
-    });
+    try {
+      const snapshot = await getDocs(collection(db, "categories"));
+      const categoriesArray = [];
+  
+      snapshot.forEach((document) => {
+        if (document.exists()) {
+          categoriesArray.push(document.data());
+        }
+      });
+  
+      setCategories(categoriesArray.reverse());
+  console.log(categoriesArray[0])
+
+    } catch (error) {
+      console.error("Error fetching categories: ", error);
+    }
   };
+  
+  
 
   return (
     <View className="font-outfit w-full mt-5 h-max mb-5 flex flex-col">

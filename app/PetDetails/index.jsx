@@ -14,7 +14,6 @@ const PetDetails = () => {
   const [isFilled, setIsFilled] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { user } = useUser();
-
   const handleFieldClick = async () => {
     if (!user || isUpdating) return;
 

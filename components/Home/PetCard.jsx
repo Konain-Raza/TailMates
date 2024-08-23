@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 
 const PetCard = ({ item }) => {
   const router = useRouter();
+  console.log("url ",item.imageURL);
+
 
   return (
     <TouchableOpacity
