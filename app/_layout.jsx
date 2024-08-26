@@ -66,8 +66,13 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+         <Stack.Screen
+          name="Chat/index"
+          options={{
+            headerShown: true,
+          }}/>
       </Stack>
-      <Stack.Screen name="Chat" />
+
      </ClerkLoaded>
     </ClerkProvider>
   );

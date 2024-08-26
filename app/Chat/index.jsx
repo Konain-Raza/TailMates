@@ -1,73 +1,93 @@
-import { View, Text, Pressable } from "react-native";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { View } from "react-native";
+import { GiftedChat } from "react-native-gifted-chat";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
-import { doc, getDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase-config";
-import { GiftedChat } from "react-native-gifted-chat";
+import moment from "moment";
 
 const Chat = () => {
+  const params = useLocalSearchParams();
+  const navigation = useNavigation();
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
-  const params = useLocalSearchParams();
   const [otherUser, setOtherUser] = useState(null);
-  const navigation = useNavigation();
 
-  const getUserDetails = async () => {
+  const getUserDetails = useCallback(async () => {
     if (!params?.id || !user?.primaryEmailAddress?.emailAddress) return;
 
     const docRef = doc(db, "chats", params.id);
 
     try {
       const snapshot = await getDoc(docRef);
+      if (!snapshot.exists()) return;
       const data = snapshot.data();
-
-      const filteredUser = data?.users.filter(
+      if (!data?.users) return;
+      const filteredUser = data.users.filter(
         (item) => item.email !== user.primaryEmailAddress.emailAddress
       );
 
       if (filteredUser.length > 0) {
         navigation.setOptions({
-          headerTitle: filteredUser[0].name || "User",
+          headerTitle: filteredUser[0]?.name || "User",
         });
-        setOtherUser(filteredUser[0]); // Set single user object
-        console.log("Filtered user:", filteredUser[0]);
+        setOtherUser(filteredUser[0]);
       }
     } catch (error) {
-      console.log("Error fetching chat details:", error);
+      console.error("Error fetching chat details:", error);
     }
-  };
+  }, [params?.id, user?.primaryEmailAddress?.emailAddress, navigation]);
 
   useEffect(() => {
-    getUserDetails();
-    setMessages([
-      {
-        _id: 1,
-        text: "Hello developer",
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: "React Native",
-          avatar: "https://placeimg.com/140/140/any",
-        },
-      },
-    ]);
-  }, []); 
+    if (!params?.id) return;
 
-  const onSend = (newmessage) => {
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newmessage)
+    getUserDetails();
+
+    const unsubscribe = onSnapshot(
+      collection(db, "chats", params.id, "messages"),
+      (snapshot) => {
+        const messagesData = snapshot.docs.map((doc) => ({
+          _id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(messagesData);
+      }
     );
-  };
+
+    return () => unsubscribe();
+  }, [params.id, getUserDetails]);
+
+  const onSend = useCallback(async (newMessages = []) => {
+    if (newMessages.length > 0 && params?.id) {
+      const message = {
+        ...newMessages[0],
+        createdAt: moment().toISOString(), // Ensure correct format
+      };
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, newMessages)
+      );
+      await addDoc(collection(db, "chats", params.id, "messages"), message);
+    }
+  }, [params?.id]);
+
+  if (!user) {
+    return null; // or a loading indicator if user is not loaded yet
+  }
 
   return (
-    <GiftedChat
-      messages={messages}
-      onSend={(messages) => onSend(messages)}
-      user={{
-        _id: 1,
-      }}
-    />
+    <View style={{ flex: 1 }}>
+      <GiftedChat
+        messages={messages}
+        showUserAvatar
+        onSend={onSend}
+        user={{
+          _id: user?.primaryEmailAddress?.emailAddress || "",
+          name: user?.fullName || "Unknown User",
+          avatar: user?.imageUrl || "",
+        }}
+      />
+    </View>
   );
 };
 

@@ -103,10 +103,10 @@ const PetDetails = () => {
   }, [navigation, user, pet.id]);
 
   const InitiateChat = async () => {
-
-    const docID1 = user.primaryEmailAddress.emailAddress + "_" +pet?.owneremail;
+    const docID1 =
+      user.primaryEmailAddress.emailAddress + "_" + pet?.owneremail;
     const docID2 = pet.email + "_" + user.primaryEmailAddress.emailAddress;
-  
+
     const q = query(
       collection(db, "chats"),
       where("id", "in", [docID1, docID2])
@@ -114,57 +114,61 @@ const PetDetails = () => {
 
     router.push({
       pathname: "/Chat",
-      query: { id: docID1 }, // Use `query` to pass URL parameters
+      params: { id: docID1 }, // Use `query` to pass URL parameters
     });
-    
+
     // Check if necessary properties are defined
     if (!user?.primaryEmailAddress?.emailAddress) {
       console.error("User email or pet email/owneremail is undefined");
       return;
     }
-  
-  
+
     try {
+
+
       const querysnapshot = await getDocs(q);
       let chatExists = false;
-  
+
       querysnapshot.forEach((doc) => {
         // console.log("Existing chat:", doc.data());
         chatExists = true;
       });
-  
+
       if (!chatExists) {
         // Check for undefined values and provide fallback values if necessary
         const chatData = {
           id: docID1,
           users: [
             {
-              email: user.primaryEmailAddress.emailAddress || "unknown@domain.com",
-              name: user.fullName || "User",
-              imageURL: user.imageUrl || "", // Provide a default empty string if imageUrl is undefined
+              email: user?.primaryEmailAddress?.emailAddress || "unknown@domain.com",
+              name: user?.fullName || "User",
+              imageURL: user?.imageUrl || "", // Provide default value
             },
             {
-              email: pet.owneremail || "unknown@domain.com",
-              name: pet.ownername || "Owner",
-              imageURL: pet.image || "", // Provide a default empty string if image is undefined
+              email: pet?.owneremail || "unknown@domain.com",
+              name: pet?.ownername || "Owner",
+              imageURL: pet?.imageURL || "", // Provide default value
             },
           ],
+          userIds: [
+            user?.primaryEmailAddress?.emailAddress,
+            pet?.email || "unknown@domain.com" // Ensure no undefined values
+          ],
         };
-  
+        
+
         await setDoc(doc(db, "chats", docID1), chatData);
-  
+
         router.push({
           pathname: "/Chat",
-          query: { id: docID1 }, // Use `query` to pass URL parameters
+          params: { id: docID1 }, // Use `query` to pass URL parameters
         });
-        
       }
     } catch (error) {
       console.error("Error initiating chat:", error);
     }
   };
-  
-  
+
   return (
     <ScrollView className="flex-1 bg-[#D4BAF8]">
       <Image
