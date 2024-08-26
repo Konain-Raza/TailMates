@@ -1,11 +1,23 @@
 import { View, Text, Image, ScrollView, Pressable } from "react-native";
 import React, { useEffect, useState } from "react";
-import { doc, updateDoc, getDoc, arrayUnion, setDoc, arrayRemove } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  arrayUnion,
+  setDoc,
+  arrayRemove,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../firebase-config";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
 
 const PetDetails = () => {
   const pet = useLocalSearchParams();
@@ -14,6 +26,7 @@ const PetDetails = () => {
   const [isFilled, setIsFilled] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { user } = useUser();
+  const router = useRouter();
   const handleFieldClick = async () => {
     if (!user || isUpdating) return;
 
@@ -42,7 +55,7 @@ const PetDetails = () => {
 
       if (isAlreadyFavorited) {
         setIsFilled(false);
-        currentFavourites = currentFavourites.filter(id => id !== petId);
+        currentFavourites = currentFavourites.filter((id) => id !== petId);
       } else {
         setIsFilled(true);
         currentFavourites.push(petId);
@@ -88,6 +101,70 @@ const PetDetails = () => {
       headerTitle: "",
     });
   }, [navigation, user, pet.id]);
+
+  const InitiateChat = async () => {
+
+    const docID1 = user.primaryEmailAddress.emailAddress + "_" +pet?.owneremail;
+    const docID2 = pet.email + "_" + user.primaryEmailAddress.emailAddress;
+  
+    const q = query(
+      collection(db, "chats"),
+      where("id", "in", [docID1, docID2])
+    );
+
+    router.push({
+      pathname: "/Chat",
+      query: { id: docID1 }, // Use `query` to pass URL parameters
+    });
+    
+    // Check if necessary properties are defined
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      console.error("User email or pet email/owneremail is undefined");
+      return;
+    }
+  
+  
+    try {
+      const querysnapshot = await getDocs(q);
+      let chatExists = false;
+  
+      querysnapshot.forEach((doc) => {
+        // console.log("Existing chat:", doc.data());
+        chatExists = true;
+      });
+  
+      if (!chatExists) {
+        // Check for undefined values and provide fallback values if necessary
+        const chatData = {
+          id: docID1,
+          users: [
+            {
+              email: user.primaryEmailAddress.emailAddress || "unknown@domain.com",
+              name: user.fullName || "User",
+              imageURL: user.imageUrl || "", // Provide a default empty string if imageUrl is undefined
+            },
+            {
+              email: pet.owneremail || "unknown@domain.com",
+              name: pet.ownername || "Owner",
+              imageURL: pet.image || "", // Provide a default empty string if image is undefined
+            },
+          ],
+        };
+  
+        await setDoc(doc(db, "chats", docID1), chatData);
+  
+        router.push({
+          pathname: "/Chat",
+          query: { id: docID1 }, // Use `query` to pass URL parameters
+        });
+        
+      }
+    } catch (error) {
+      console.error("Error initiating chat:", error);
+    }
+  };
+  
+  
   return (
     <ScrollView className="flex-1 bg-[#D4BAF8]">
       <Image
@@ -209,7 +286,10 @@ const PetDetails = () => {
             </View>
           </View>
         </View>
-        <Pressable className="w-full text-center p-5 bg-purple-950 mx-auto flex items-center rounded-xl">
+        <Pressable
+          className="w-full text-center p-5 bg-purple-950 mx-auto flex items-center rounded-xl"
+          onPress={() => InitiateChat()}
+        >
           <Text className="text-white text-xl font-bold">Adopt Me</Text>
         </Pressable>
       </View>

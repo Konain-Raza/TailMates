@@ -1,12 +1,15 @@
 import { View, Text, Image } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-expo";
 
 const Header = () => {
+  const [imageUrl, setImageURL] = useState('')
   const { user } = useUser();
-  const imageUrl = user?.imageUrl || "https://example.com/placeholder.png"; // Define imageUrl here
 
+useEffect(()=>{
+  setImageURL(user?.imageUrl || "https://example.com/placeholder.png")
 
+},[])
   return (
     <View className=" w-full h-[12vh] flex items-center flex-row justify-between px-2">
       <View className="flex flex-colitems-start justify-center">

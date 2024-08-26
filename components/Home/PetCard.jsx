@@ -1,10 +1,10 @@
 import { View, Text, TouchableOpacity, Image, Dimensions } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "expo-router";
 
 const PetCard = ({ item }) => {
   const router = useRouter();
-  console.log("url ",item.imageURL);
+
 
 
   return (

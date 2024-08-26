@@ -67,6 +67,7 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      <Stack.Screen name="Chat" />
      </ClerkLoaded>
     </ClerkProvider>
   );

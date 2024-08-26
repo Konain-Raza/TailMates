@@ -31,7 +31,6 @@ const Favourites = () => {
         if (favIds.length === 0) {
           setFavData([]);
         } else {
-          console.log(favIds.length);
           const pets = [];
           for (const petId of favIds) {
             const petDocRef = doc(db, "pets", petId);

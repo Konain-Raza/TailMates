@@ -18,6 +18,12 @@ const Profile = () => {
       pathname: "/AddPet",
     },
     {
+      id: 1,
+      title: "My Posts",
+      icon: "add-circle",
+      pathname: "/AddPet",
+    },
+    {
       id: 2,
       title: "Favourites",
       icon: "heart",

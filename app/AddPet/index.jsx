@@ -172,7 +172,6 @@ const Index = () => {
       });
 
       Alert.alert('Success', 'Pet added successfully!');
-      console.log(form);
 
       setForm({
         name: '',

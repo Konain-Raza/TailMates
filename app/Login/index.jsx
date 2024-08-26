@@ -21,10 +21,9 @@ const Index = () => {
 
   const onPress = useCallback(async () => {
     try {
-      const { createdSessionId, signIn, signUp, setActive } =
-        await startOAuthFlow({
-          redirectUrl: Linking.createURL("/(tabs)/home", { scheme: "myapp" }),
-        });
+      const { createdSessionId } = await startOAuthFlow({
+        redirectUrl: Linking.createURL("(tabs)/home", { scheme: "myapp" }),
+      });
 
       if (createdSessionId) {
         console.log("Logged in session");
@@ -45,11 +44,12 @@ const Index = () => {
       />
       <View className=" h-[40%] flex flex-col justify-center px-4">
         <Text className="text-4xl text-center font-outfit-bold mb-2">
-          Ready to Find Your Furry BFF? 🐕
+          Discover Your Purrfect Partner! 🐾
         </Text>
         <Text className="text-xl text-center text-gray-600 mb-10 font-outfit">
-          Time to adopt a pet and unleash a whole new level of happiness! 🐾✨
+          Adopt your next adventure buddy and let the tail-wagging begin! 🐶💖
         </Text>
+
         <Pressable
           onPress={onPress}
           className="w-[90%] mx-auto bg-purple-950 p-5 rounded-xl items-center"
