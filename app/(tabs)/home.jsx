@@ -1,15 +1,16 @@
-import { ScrollView,View ,Text } from "react-native";
+import { Text } from "react-native";
 import React from "react";
 import Header from "../../components/Home/Header";
 import Slider from "../../components/Home/Slider";
 import PetListCategory from "../../components/Home/PetListCategory";
+import { SafeAreaView } from "react-native-safe-area-context";
 const Home = () => {
   return (
-    <ScrollView className="w-full h-max mt-5 px-3">
+    <SafeAreaView className=" p-2 flex-1">
       <Header />
       <Slider/>
       <PetListCategory/>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

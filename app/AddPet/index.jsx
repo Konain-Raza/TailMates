@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import DropDownPicker from "react-native-dropdown-picker";
+import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import { storage, db } from "../firebase-config";
 import { useUser } from "@clerk/clerk-expo";
@@ -18,7 +18,7 @@ import { setDoc, collection, doc } from "firebase/firestore";
 
 const Index = () => {
   const navigation = useNavigation();
-  const { user } = useUser(); // Destructure user from the hook
+  const { user } = useUser();
 
   const [form, setForm] = useState({
     name: "",
@@ -29,14 +29,10 @@ const Index = () => {
     about: "",
     weight: "",
     imageURL: null,
-    
-    owner: "",
+    ownername: "",
     owneremail: "",
   });
-  const [openCategory, setOpenCategory] = useState(false);
-  const [openGender, setOpenGender] = useState(false);
-  const [valueCategory, setValueCategory] = useState("");
-  const [valueGender, setValueGender] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const [categories, setCategories] = useState([
@@ -59,7 +55,7 @@ const Index = () => {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: "Add New Pet",
+      headerTitle: "Enroll Your Furry Companion 🐕",
     });
   }, [navigation]);
 
@@ -67,8 +63,10 @@ const Index = () => {
     if (user) {
       setForm((prevForm) => ({
         ...prevForm,
-        owner: user.fullName || "No name available",
-        owneremail: user.primaryEmailAddress?.emailAddress || "No email available",
+        ownerimg: user?.imageUrl,
+        ownername: user.fullName || "No name available",
+        owneremail:
+          user.primaryEmailAddress?.emailAddress || "No email available",
       }));
     }
   }, [user]);
@@ -87,7 +85,7 @@ const Index = () => {
       aspect: [1, 1],
       quality: 1,
     });
-  
+
     if (!result.canceled) {
       setForm((prevForm) => ({
         ...prevForm,
@@ -95,38 +93,35 @@ const Index = () => {
       }));
     }
   };
-  
+
   const uploadImage = async () => {
     if (!form.imageURL) {
-      console.error("No image URI provided");
-      return;
+      Alert.alert("No image URI provided");
+      return null;
     }
-  
+
     try {
       const response = await fetch(form.imageURL);
       if (!response.ok) {
         throw new Error(`Failed to fetch image. Status: ${response.status}`);
       }
-  
+
       const blobImg = await response.blob();
       const mimeType = blobImg.type;
-  
+
       const storageRef = ref(storage, `/Images/${Date.now()}`);
       await uploadBytes(storageRef, blobImg, { contentType: mimeType });
-  
+
       const url = await getDownloadURL(storageRef);
-      setForm((prevForm) => ({
-        ...prevForm,
-        imageURL: url,
-      }));
-  
-      console.log("Image upload successful:", url);
+      return url;
     } catch (error) {
-      console.error("Error uploading image:", error);
+      Alert.alert("Error uploading image:", error.message || error.toString());
+      return null;
     }
   };
 
   const handleSubmit = async () => {
+    
     setLoading(true);
 
     const emptyFields = Object.keys(form).filter(
@@ -137,242 +132,217 @@ const Index = () => {
       const missingFields = emptyFields
         .map((field) => {
           switch (field) {
-            case 'name': return 'Name';
-            case 'category': return 'Category';
-            case 'gender': return 'Gender';
-            case 'age': return 'Age';
-            case 'breed': return 'Breed';
-            case 'about': return 'About';
-            case 'weight': return 'Weight';
-            case 'image': return 'Image';
-            default: return field.charAt(0).toUpperCase() + field.slice(1);
+            case "name":
+              return "Name";
+            case "category":
+              return "Category";
+            case "gender":
+              return "Gender";
+            case "age":
+              return "Age";
+            case "breed":
+              return "Breed";
+            case "about":
+              return "About";
+            case "weight":
+              return "Weight";
+            case "image":
+              return "Image";
+            default:
+              return field.charAt(0).toUpperCase() + field.slice(1);
           }
         })
-        .join(', ');
+        .join(", ");
 
       Alert.alert(
-        'Error',
+        "Error",
         `Please fill in the following fields: ${missingFields}`
       );
-
       setLoading(false);
       return;
     }
 
     try {
+    
+
+      let imageUrl = form.imageURL;
       if (form.imageURL) {
-        await uploadImage();
+     
+        imageUrl = await uploadImage();
+        if (imageUrl) {
+          setForm((prevForm) => ({
+            ...prevForm,
+            imageURL: imageUrl,
+          }));
+        } else {
+          Alert.alert("Error", "Image upload failed. Please try again.");
+          setLoading(false);
+          return;
+        }
       }
 
-      const docRef = doc(collection(db, 'pets'));
+      const docRef = doc(collection(db, "pets"));
+   
 
       await setDoc(docRef, {
         ...form,
+        imageURL: imageUrl,
         id: docRef.id,
       });
 
-      Alert.alert('Success', 'Pet added successfully!');
+     
+      Alert.alert("Success", "Pet added successfully!");
 
       setForm({
-        name: '',
-        category: '',
-        gender: '',
-        age: '',
-        breed: '',
-        about: '',
-        weight: '',
+        name: "",
+        category: "",
+        gender: "",
+        age: "",
+        breed: "",
+        about: "",
+        weight: "",
         imageURL: null,
       });
-      setValueCategory('');
-      setValueGender('');
-
     } catch (error) {
-      console.error('Error adding document:', error);
-      Alert.alert('Error', 'An error occurred while adding the pet.');
+      Alert.alert("Error adding document:", error.message || error.toString());
+      Alert.alert("Error", "An error occurred while adding the pet.");
     } finally {
       setLoading(false);
+      
     }
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        padding: 16,
-        backgroundColor: "#fff",
-      }}
-    >
-      <Text
-        style={{
-          color: "#000",
-          fontSize: 24,
-          fontWeight: "bold",
-          marginBottom: 24,
-        }}
-      >
-        Add New Pet
+    <ScrollView className="flex-1 p-8 bg-white">
+      <Text className="text-black text-2xl font-bold mb-6">
+        Register Your New Furry Friend 🦴🐕
       </Text>
 
       <TouchableOpacity
         onPress={handleImagePick}
-        style={{
-          width: "40%",
-          aspectRatio: 1, // Square aspect ratio
-          backgroundColor: "#f0f0f0",
-          borderColor: "#ccc",
-          borderWidth: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 8,
-          marginBottom: 24,
-        }}
+        className="w-40 aspect-square bg-gray-200 border border-gray-400 justify-center items-center rounded-lg mb-6"
       >
         {form.imageURL ? (
           <Image
             source={{ uri: form.imageURL }}
-            style={{ width: "100%", height: "100%", borderRadius: 8 }}
+            className="w-full h-full rounded-lg"
           />
         ) : (
-          <Text style={{ color: "#888" }}>Select an image</Text>
+          <Text className="text-gray-500">Select an image</Text>
         )}
       </TouchableOpacity>
 
-      <View style={{ width: "100%", marginBottom: 16 }}>
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-          Name
-        </Text>
+      <View className="w-full mb-4">
+        <Text className="font-bold text-lg mb-2">Name</Text>
         <TextInput
-          style={{
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 16,
-          }}
+          className="border border-gray-300 rounded-lg p-3 mb-4"
           value={form.name}
           onChangeText={(text) => handleChange("name", text)}
         />
 
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-          Breed
-        </Text>
+        <Text className="font-bold text-lg mb-2">Breed</Text>
         <TextInput
           maxLength={20}
-          style={{
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 16,
-          }}
+          className="border border-gray-300 rounded-lg p-3 mb-4"
           value={form.breed}
           onChangeText={(text) => handleChange("breed", text)}
         />
 
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginBottom: 16,
-          }}
-        >
-          <View style={{ width: "48%" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-              Category
-            </Text>
-            <DropDownPicker
-              open={openCategory}
-              value={valueCategory}
-              items={categories}
-              setOpen={setOpenCategory}
-              setValue={setValueCategory}
-              onChangeValue={(value) => handleChange("category", value)}
-              placeholder="Select a category"
-              containerStyle={{ marginBottom: 16 }}
+        <View className="flex-row justify-between mb-4">
+          <View className="w-1/2 pr-2">
+            <Text className="font-bold text-lg mb-2">Age</Text>
+            <TextInput
+              maxLength={2}
+              keyboardType="numeric"
+              className="border border-gray-300 rounded-lg p-3"
+              value={form.age}
+              onChangeText={(text) => handleChange("age", text)}
             />
           </View>
-          <View style={{ width: "48%" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-              Gender
-            </Text>
-            <DropDownPicker
-              open={openGender}
-              value={valueGender}
-              items={genders}
-              setOpen={setOpenGender}
-              setValue={setValueGender}
-              onChangeValue={(value) => handleChange("gender", value)}
-              placeholder="Select gender"
-              containerStyle={{ marginBottom: 16 }}
+          <View className="w-1/2 pl-2">
+            <Text className="font-bold text-lg mb-2">Weight (kg)</Text>
+            <TextInput
+              maxLength={3}
+              keyboardType="numeric"
+              className="border border-gray-300 rounded-lg p-3"
+              value={form.weight}
+              onChangeText={(text) => handleChange("weight", text)}
             />
           </View>
         </View>
 
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-          Age
-        </Text>
-        <TextInput
-          style={{
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 16,
-          }}
-          keyboardType="numeric"
-          value={form.age}
-          onChangeText={(text) => handleChange("age", text)}
-        />
+        <View className="mb-4">
+          <Text className="font-bold text-lg mb-2">Category</Text>
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: "#D1D5DB",
+              borderRadius: 8,
+              padding: 3,
+            }}
+          >
+            <Picker
+              selectedValue={form.category}
+              onValueChange={(itemValue) => handleChange("category", itemValue)}
+              style={{ padding: 10 }}
+            >
+              <Picker.Item label="Select category" value="" />
+              {categories.map((category, index) => (
+                <Picker.Item
+                  key={index}
+                  label={category.label}
+                  value={category.value}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
 
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-          Weight
-        </Text>
-        <TextInput
-          style={{
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 16,
-          }}
-          keyboardType="numeric"
-          value={form.weight}
-          onChangeText={(text) => handleChange("weight", text)}
-        />
+        <View className="mb-4">
+          <Text className="font-bold text-lg mb-2">Gender</Text>
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: "#D1D5DB",
+              borderRadius: 8,
+              padding: 3,
+            }}
+          >
+            <Picker
+              selectedValue={form.gender}
+              onValueChange={(itemValue) => handleChange("gender", itemValue)}
+              className="border border-gray-300 rounded-lg"
+            >
+              <Picker.Item label="Select gender" value="" />
+              {genders.map((gender, index) => (
+                <Picker.Item
+                  key={index}
+                  label={gender.label}
+                  value={gender.value}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
 
-        <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 8 }}>
-          About
-        </Text>
+        <Text className="font-bold text-lg mb-2">About</Text>
         <TextInput
-          style={{
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 8,
-            padding: 12,
-            height: 100,
-            textAlignVertical: "top",
-            marginBottom: 16,
-          }}
           multiline
+          className="border border-gray-300 rounded-lg p-3 "
           value={form.about}
           onChangeText={(text) => handleChange("about", text)}
         />
-      </View>
 
-      <TouchableOpacity
-        onPress={handleSubmit}
-        style={{
-          backgroundColor: "#007bff",
-          padding: 16,
-          borderRadius: 8,
-          alignItems: "center",
-        }}
-        disabled={loading}
-      >
-        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
-          {loading ? "Adding..." : "Add Pet"}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          className="bg-purple-950 p-5 w-full my-5 mb-10 rounded-2xl items-center"
+          disabled={loading}
+        >
+          <Text className="text-white text-lg font-bold">
+            {loading ? "Fetching treats..." : "Add Your Furry Friend 🐕"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };

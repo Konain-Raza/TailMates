@@ -25,7 +25,7 @@ const Slider = () => {
   };
 
   return (
-    <View className="w-max h-[30vh] flex items-center justify-center ">
+    <View className="w-[95%] mx-auto h-[23vh] flex  items-center justify-center ">
       <FlatList 
         data={sliders}
         refreshing={loading}
@@ -36,7 +36,7 @@ const Slider = () => {
         showsHorizontalScrollIndicator={false}
         renderItem={({ item,index }) => (
           <View className="p-1 mr-3">
-            <Image source={{ uri: item?.imageURL }} className=" h-full rounded-xl" style={{width:Dimensions.get('screen').width*0.9}}/>
+            <Image source={{ uri: item.imageURL  }} className=" h-full object-cover rounded-xl" style={{width:Dimensions.get('screen').width*0.9}}/>
           </View>
         )}
       />

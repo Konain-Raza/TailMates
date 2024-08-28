@@ -1,74 +1,87 @@
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, Image } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-expo";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase-config"; // Ensure correct import
+import { db } from "../firebase-config";
 import UserItem from "../../components/Inbox/UserItem";
+import { Alert } from "react-native";
 
 const Inbox = () => {
+  const [loading, setLoading] = useState(false);
   const { user } = useUser();
   const [userList, setUserList] = useState([]);
-  const [mappedUsers, setMappedUsers] = useState([]);
 
   useEffect(() => {
     if (user) {
       getUserList();
     } else {
-      console.log("User is not defined or logged in.");
+      Alert.alert("Error", "User is not defined or logged in.");
     }
   }, [user]);
 
-  useEffect(() => {
-    if (userList.length > 0) {
-      mapOthers();
-    }
-  }, [userList]);
-
-  const mapOthers = () => {
-    const lists = [];
-    userList.forEach((record) => {
-      const otherUser = record.users?.filter(
-        (u) => u?.email !== user?.primaryEmailAddress?.emailAddress
-      );
-      if (otherUser.length > 0) {
-        const result = {
-          docId: record.id,
-          ...otherUser[0],
-        };
-        lists.push(result);
-      }
-    });
-    setMappedUsers(lists); // Update the state with the processed users
-  };
-
   const getUserList = async () => {
-    setUserList([]);
+    setLoading(true);
     try {
-      console.log('Fetching user list for:', user?.primaryEmailAddress?.emailAddress);
-
       const q = query(
         collection(db, "chats"),
-        where("userIds", "array-contains", user?.primaryEmailAddress?.emailAddress)
+        where(
+          "userIds",
+          "array-contains",
+          user?.primaryEmailAddress?.emailAddress
+        )
       );
 
       const snapshot = await getDocs(q);
-      const userListData = snapshot.docs.map((doc) => doc.data());
-      console.log('User list data:', userListData);
+      const userListData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setUserList(userListData);
     } catch (error) {
-      console.error("Error fetching user list:", error);
+      Alert.alert(
+        "Error fetching user list:",
+        error.message || error.toString()
+      );
     }
+    setLoading(false);
+  };
+
+  const mapOthers = () => {
+    return userList
+      .map((record) => {
+        const otherUser = record.users?.find(
+          (u) => u?.email !== user?.primaryEmailAddress?.emailAddress
+        );
+        if (otherUser) {
+          return {
+            docId: record.id,
+            ...otherUser,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
   };
 
   return (
-    <View>
-      <Text className='font-outfit-bold'>Inbox</Text>
+    <View className="w-full px-5 pt-3">
+      <View className="mt-10 w-full h-max mb-5">
+        <Text className="text-3xl font-outfit-bold px-2">Inbox 📬</Text>
+      </View>
       <FlatList
-        data={mappedUsers} // Use the state that contains the processed users
-        renderItem={({ item }) => (
-          <UserItem userinfo={item} />
-        )}
-        keyExtractor={(item) => item.docId} // Ensure a unique key for each item
+        refreshing={loading}
+        onRefresh={getUserList}
+        data={mapOthers()} // This returns the correct list
+        renderItem={({ item }) => <UserItem userinfo={item} />}
+        keyExtractor={(item) => item.docId}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center w-full h-[50vh] px-10">
+            <Text className="text-lg text-center font-outfit-bold text-gray-800 mt-4">
+              No messages here! 📭 Your inbox is empty.
+            </Text>
+            <Image source={require("../../assets/images/emptyinbox.png")} className='contain w-60 h-60' />
+          </View>
+        }
       />
     </View>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View } from "react-native";
+import { View, Alert } from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
@@ -24,6 +24,7 @@ const Chat = () => {
       if (!snapshot.exists()) return;
       const data = snapshot.data();
       if (!data?.users) return;
+
       const filteredUser = data.users.filter(
         (item) => item.email !== user.primaryEmailAddress.emailAddress
       );
@@ -35,44 +36,67 @@ const Chat = () => {
         setOtherUser(filteredUser[0]);
       }
     } catch (error) {
-      console.error("Error fetching chat details:", error);
+      Alert.alert("Error fetching chat details", JSON.stringify(error));
     }
   }, [params?.id, user?.primaryEmailAddress?.emailAddress, navigation]);
 
   useEffect(() => {
     if (!params?.id) return;
-
     getUserDetails();
 
     const unsubscribe = onSnapshot(
       collection(db, "chats", params.id, "messages"),
       (snapshot) => {
-        const messagesData = snapshot.docs.map((doc) => ({
-          _id: doc.id,
-          ...doc.data(),
-        }));
-        setMessages(messagesData);
+        const messagesData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          return {
+            _id: doc.id,
+            text: data.text || '',
+            createdAt: data.createdAt
+              ? moment(data.createdAt.toDate ? data.createdAt.toDate() : data.createdAt).toISOString()
+              : moment().toISOString(),
+            user: {
+              _id: data.user?._id || '',
+              name: data.user?.name || '',
+              avatar: data.user?.avatar || '',
+            },
+          };
+        });
+
+        const sortedMessages = messagesData.sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+
+        setMessages(sortedMessages);
       }
     );
 
     return () => unsubscribe();
   }, [params.id, getUserDetails]);
 
-  const onSend = useCallback(async (newMessages = []) => {
-    if (newMessages.length > 0 && params?.id) {
-      const message = {
-        ...newMessages[0],
-        createdAt: moment().toISOString(), // Ensure correct format
-      };
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, newMessages)
-      );
-      await addDoc(collection(db, "chats", params.id, "messages"), message);
-    }
-  }, [params?.id]);
+  const onSend = useCallback(
+    async (newMessages = []) => {
+      if (newMessages.length > 0 && params?.id) {
+        const message = {
+          ...newMessages[0],
+          createdAt: moment().toISOString(),
+        };
+        setMessages((previousMessages) =>
+          GiftedChat.append(previousMessages, newMessages)
+        );
+        try {
+          await addDoc(collection(db, "chats", params.id, "messages"), message);
+        } catch (error) {
+          Alert.alert("Error sending message",  JSON.stringify(error));
+        }
+      }
+    },
+    [params?.id]
+  );
 
   if (!user) {
-    return null; // or a loading indicator if user is not loaded yet
+    return null;
   }
 
   return (
@@ -82,9 +106,9 @@ const Chat = () => {
         showUserAvatar
         onSend={onSend}
         user={{
-          _id: user?.primaryEmailAddress?.emailAddress || "",
-          name: user?.fullName || "Unknown User",
-          avatar: user?.imageUrl || "",
+          _id: user?.primaryEmailAddress?.emailAddress || '',
+          name: user?.fullName || '',
+          avatar: user?.imageUrl || '',
         }}
       />
     </View>
