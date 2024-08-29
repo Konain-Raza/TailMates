@@ -139,13 +139,12 @@ const PetDetails = () => {
         
         
         try {
-          // Simulate some logic or API calls before navigation
           if (!chatID) {
             throw new Error("Chat ID is missing.");
           }
       
           // Perform navigation
-          navigation.navigate("Chat", { id: chatID });
+          navigation.navigate("Chat/index", { id: chatID });
         } catch (error) {
           // Handle any errors that occur
           console.error("Navigation Error:", error);

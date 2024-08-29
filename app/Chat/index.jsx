@@ -65,7 +65,7 @@ const Chat = () => {
         });
 
         const sortedMessages = messagesData.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
         setMessages(sortedMessages);

@@ -17,7 +17,7 @@ const Inbox = () => {
     } else {
       Alert.alert("Error", "User is not defined or logged in.");
     }
-  }, [user]);
+  }, []);
 
   const getUserList = async () => {
     setLoading(true);

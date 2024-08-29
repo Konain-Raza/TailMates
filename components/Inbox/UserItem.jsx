@@ -7,7 +7,7 @@ const UserItem = ({ userinfo }) => {
 
   const handlePress = () => {
     if (userinfo?.docId) {
-      navigation.navigate("Chat", { id: userinfo.docId });
+      navigation.navigate("Chat/index", { id: userinfo.docId });
     } else {
       console.error("User ID is missing.");
       Alert.alert("Error", "User ID is missing.");
