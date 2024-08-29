@@ -121,9 +121,14 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
-    
     setLoading(true);
-
+    setForm((prevForm) => ({
+      ...prevForm,
+      ownerimg: user?.imageUrl,
+      ownername: user.fullName || "No name available",
+      owneremail:
+        user.primaryEmailAddress?.emailAddress || "No email available",
+    }));
     const emptyFields = Object.keys(form).filter(
       (key) => !form[key] && form[key] !== 0
     );
@@ -163,11 +168,8 @@ const Index = () => {
     }
 
     try {
-    
-
       let imageUrl = form.imageURL;
       if (form.imageURL) {
-     
         imageUrl = await uploadImage();
         if (imageUrl) {
           setForm((prevForm) => ({
@@ -182,7 +184,6 @@ const Index = () => {
       }
 
       const docRef = doc(collection(db, "pets"));
-   
 
       await setDoc(docRef, {
         ...form,
@@ -190,7 +191,6 @@ const Index = () => {
         id: docRef.id,
       });
 
-     
       Alert.alert("Success", "Pet added successfully!");
 
       setForm({
@@ -208,7 +208,6 @@ const Index = () => {
       Alert.alert("Error", "An error occurred while adding the pet.");
     } finally {
       setLoading(false);
-      
     }
   };
 
