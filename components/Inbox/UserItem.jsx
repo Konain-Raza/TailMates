@@ -1,25 +1,50 @@
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
-import { Link } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 const UserItem = ({ userinfo }) => {
+  const navigation = useNavigation();
+
+  const handlePress = () => {
+    if (userinfo?.docId) {
+      navigation.navigate("Chat", { id: userinfo.docId });
+    } else {
+      console.error("User ID is missing.");
+      Alert.alert("Error", "User ID is missing.");
+    }
+  };
+
   return (
-    <Link
-      href={"Chat?id=" + userinfo?.docId}
-      className="w-[95%] m-auto bg-white p-4 mb-3  rounded-2xl "
+    <TouchableOpacity
+      onPress={handlePress}
+      style={{
+        width: "95%",
+        margin: "auto",
+        backgroundColor: "white",
+        padding: 16,
+        marginBottom: 12,
+        borderRadius: 16,
+      }}
     >
-      <View className="flex-row items-center p-2 bg-white  mb-2 rounded-lg ">
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 8,
+          backgroundColor: "white",
+          marginBottom: 8,
+          borderRadius: 8,
+        }}
+      >
         <Image
-          source={{
-            uri: userinfo.imageURL,
-          }}
-          className="w-12 h-12 rounded-full"
+          source={{ uri: userinfo?.imageURL }}
+          style={{ width: 48, height: 48, borderRadius: 24 }}
         />
-        <Text className="ml-4 text-2xl  font-outfit-bold">
+        <Text style={{ marginLeft: 16, fontSize: 24, fontWeight: "bold" }}>
           {userinfo?.name}
         </Text>
       </View>
-    </Link>
+    </TouchableOpacity>
   );
 };
 

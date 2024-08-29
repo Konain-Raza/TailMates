@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Tailmates",
-    "slug": "TailMates",
+    "slug": "Tailmates",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/tailmate-icon.png",
@@ -19,7 +19,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/tailmate-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.konain.Tailmates"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +41,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "f63d2710-4d07-4659-9f07-8a7a91132749"
+      }
     }
   }
 }

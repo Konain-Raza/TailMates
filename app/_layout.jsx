@@ -2,9 +2,10 @@ import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
-import { View, Text, StatusBar, Alert, ActivityIndicator } from "react-native";
+import { View, StatusBar, Alert, ActivityIndicator } from "react-native";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from "react";
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'outfit': require("../assets/fonts/Outfit-Regular.ttf"),
@@ -58,7 +59,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator/>
+        <ActivityIndicator />
       </View>
     );
   }
