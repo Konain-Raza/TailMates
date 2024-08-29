@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
-import { View, Text, StatusBar, Alert } from "react-native";
+import { View, Text, StatusBar, Alert, ActivityIndicator } from "react-native";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from "react";
 export default function RootLayout() {
@@ -15,26 +15,18 @@ export default function RootLayout() {
   const tokenCache = {
     async getToken(key) {
       try {
-        const item = await SecureStore.getItemAsync(key);
-        if (item) {
-          console.log(`${key} was used 🔐 \n`);
-        } else {
-          console.log("No values stored under key: " + key);
-        }
-        return item;
+        return await SecureStore.getItemAsync(key);
       } catch (error) {
         console.error("SecureStore get item error: ", error);
-        Alert.alert("Error", "Failed to get item from SecureStore.");
         await SecureStore.deleteItemAsync(key);
         return null;
       }
     },
     async saveToken(key, value) {
       try {
-        return SecureStore.setItemAsync(key, value);
+        return await SecureStore.setItemAsync(key, value);
       } catch (err) {
         console.error("SecureStore save item error: ", err);
-        Alert.alert("Error", "Failed to save item to SecureStore.");
       }
     },
   };
@@ -42,13 +34,8 @@ export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
-    Alert.alert(
-      "Configuration Error",
-      "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
-    );
-    throw new Error(
-      "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
-    );
+    Alert.alert("Configuration Error", "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env");
+    throw new Error("Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env");
   }
 
   useEffect(() => {
@@ -57,10 +44,8 @@ export default function RootLayout() {
         await SplashScreen.preventAutoHideAsync();
       } catch (e) {
         console.warn(e);
-        Alert.alert("Error", "Failed to prepare splash screen.");
       }
     }
-
     prepare();
   }, []);
 
@@ -73,7 +58,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
+        <ActivityIndicator/>
       </View>
     );
   }
@@ -83,23 +68,11 @@ export default function RootLayout() {
       <ClerkLoaded>
         <StatusBar barStyle="dark-content" backgroundColor="white" />
         <Stack>
-          <Stack.Screen name="index" />
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Login/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Chat/index"
-            options={{ headerShown: true }}
-          />
-          <Stack.Screen
-            name="AddPet/index"
-            options={{ headerShown: true }}
-          />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="Login/index" options={{ headerShown: false }} />
+          <Stack.Screen name="Chat/index" options={{ headerShown: true }} />
+          <Stack.Screen name="AddPet/index" options={{ headerShown: true }} />
         </Stack>
       </ClerkLoaded>
     </ClerkProvider>
